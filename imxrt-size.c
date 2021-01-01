@@ -97,6 +97,6 @@ int main() {
 	else if (teensy_model_identifier == 0x26) { //TeensyMM
 		retval = printnumbers(flexram_bank_config, etext - stext, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, 0, 512, 16128);
 	}
-	else retval = 1;
+	//else retval = 1;
 	return retval;
 }
