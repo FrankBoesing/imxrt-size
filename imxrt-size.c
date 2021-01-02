@@ -8,23 +8,24 @@ int printnumbers(unsigned flexram_config, unsigned itcm, unsigned dtcm, unsigned
 	int retval = 0;
 	unsigned dtcm_allocated = 0;
 	unsigned itcm_allocated = 0;	
-	printf("\nFlexRAM section ITCM+DTCM = 512 KB\n");
-
-//	char dtcm_itcm_config[17] = "DDDDDDDDDDDDDDDD";
-//	char* psz = &dtcm_itcm_config[15]; // Crud code...
-//	printf("\tConfig : %08x (", flexram_config);
-	for (; flexram_config; flexram_config >>= 2) {
-		if ((flexram_config & 3) == 2) {
-//			*psz-- = 'D';
+	
+	char dtcm_itcm_config[17] = "DDDDDDDDDDDDDDDD";
+	char* psz = &dtcm_itcm_config[15]; // Crud code...
+	unsigned fc = flexram_config;
+	for (; fc; fc >>= 2) {
+		if ((fc & 3) == 2) {
+			*psz-- = 'D';
 			dtcm_allocated += 32;	// 32K per bank;
 		}
-		else if ((flexram_config & 3) == 3) {
-//			*psz-- = 'I';
+		else if ((fc & 3) == 3) {
+			*psz-- = 'I';
 			itcm_allocated += 32;	// 32K per bank;
 		}
-//		else psz--; 
+		else psz--; 
 	}
-//	printf("%s)\n", dtcm_itcm_config);
+
+	printf("\nFlexRAM section ITCM+DTCM = %d KB\n", itcm_allocated + dtcm_allocated);
+	//printf("\tConfig : %08x (%s)\n", flexram_config,dtcm_itcm_config);
 
 	printf("\tITCM : %6d B\t(%5.2f%% of %4d KB)\n", itcm, itcm / (itcm_allocated * 1024.0) * 100, itcm_allocated);
 	printf("\tDTCM : %6d B\t(%5.2f%% of %4d KB)\n", dtcm, dtcm / (dtcm_allocated * 1024.0) * 100, dtcm_allocated);
@@ -33,14 +34,14 @@ int printnumbers(unsigned flexram_config, unsigned itcm, unsigned dtcm, unsigned
 		printf(">>>>> Error FlexRAM Filled no room for Stack: %d <<<<<\n", stack);
 	}
 	else {
-		printf("\tAvailable for Stack: %6d B\n", stack);
+		printf("\tAvailable for Stack or global Variables: %6d B\n", stack);
 	}
 	printf("OCRAM: 512KB\n");
 	printf("\tDMAMEM: %6d B\t(%5.2f%% of %4d KB)\n", ocram, ocram / (ocramm * 1024.0) * 100, ocramm);
 	ocram = ocramm*1024 - ocram;
 	printf("\tAvailable for Heap: %6d B\t(%5.2f%% of %4d KB)\n", ocram, ocram / (ocramm * 1024.0) * 100, ocramm);
 	if (extmem) {
-		printf("Extmem Used: %u\n", extmem);
+		printf("EXTMEM Used: %u B\n", extmem);
 	}
 
 	printf("Flash: %6d B\t(%5.2f%% of %4d KB)\n", flash, flash / (flashm * 1024.0) * 100, flashm);
@@ -82,16 +83,16 @@ int main() {
 			if (strstr(str, " _estack")) estack = strtoul(str, NULL, 16);
 			if (strstr(str, " _flexram_bank_config")) flexram_bank_config = strtoul(str, NULL, 16);
 			if (strstr(str, " _extram_start")) extram_start = strtoul(str, NULL, 16);
-			if (strstr(str, " _extram_end")) extram_end = strtoul(str, NULL, 16);
+			if (strstr(str, " _extram_end")) extram_end = strtoul(str, NULL, 16);			
 			//puts( str );
 		}
 	} while (s);
 
 	//printf("estack:%x ebss:%x\n", estack, ebss);
-	if (teensy_model_identifier == 0x24) {
+	if (teensy_model_identifier == 0x24) { //Teensy40
 		retval = printnumbers(flexram_bank_config, etext - stext, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, 0, 512, 1984);
 	}
-	else if (teensy_model_identifier == 0x25) {//Teensy40
+	else if (teensy_model_identifier == 0x25) {//Teensy41
 		retval = printnumbers(flexram_bank_config, etext - stext, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, extram_end - extram_start, 512, 7936);
 	}
 	else if (teensy_model_identifier == 0x26) { //TeensyMM
