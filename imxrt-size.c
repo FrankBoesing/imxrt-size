@@ -21,7 +21,7 @@ int printnumbers(unsigned teensy_model_identifier, unsigned flexram_config,
 	
 	unsigned ram1size = (itcm_allocated + dtcm_allocated) * 1024;
 	
-	printf("RAM1: %5.2f%% of %d kB used.\n", (double)(itcm_allocated + dtcm) / ram1size * 100, ram1size / 1024);
+	printf("RAM1: %5.2f%% of %d kB used.\n", (double)(itcm_allocated*1024 + dtcm) / ram1size * 100, ram1size / 1024);
 	printf("   Code (ITCM):             %6.2f kB\n", itcm / 1024.0);
 	printf("   Variables (DTCM):        %6.2f kB\n", dtcm / 1024.0);
 	printf("   Available for Variables: %6.2f kB\n", stack / 1024.0);
