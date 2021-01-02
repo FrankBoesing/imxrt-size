@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define RAM1_WARN_PERCENTAGE 99
+
 int printnumbers(unsigned teensy_model_identifier, unsigned flexram_config, 
 	unsigned itcm, unsigned dtcm, unsigned ocram, unsigned flash, int stack, unsigned extmem,
 	unsigned ocramsize, unsigned flashsize)
@@ -21,13 +23,14 @@ int printnumbers(unsigned teensy_model_identifier, unsigned flexram_config,
 	
 	unsigned ram1size = (itcm_allocated + dtcm_allocated) * 1024;
 	
-	printf("RAM1: %5.2f%% of %d kB used.\n", (double)(itcm_allocated*1024 + dtcm) / ram1size * 100, ram1size / 1024);
-	printf("   Code (ITCM):             %6.2f kB\n", itcm / 1024.0);
+	printf("RAM1: %6.2f%% of %d kB used.\n", (double)(itcm_allocated*1024 + dtcm) / ram1size * 100, ram1size / 1024);
+	//printf("   Code (ITCM):             %6.2f kB\n", itcm / 1024.0);
+	printf("   Code (ITCM):             %6.2f kB (%dx32 kB %s)\n", itcm / 1024.0, itcm_allocated / 32, ((itcm_allocated / 32 > 1) ? "Blocks" : "Block") );
 	printf("   Variables (DTCM):        %6.2f kB\n", dtcm / 1024.0);
 	printf("   Available for Variables: %6.2f kB\n", stack / 1024.0);
 	printf("\n");
 	
-	printf("RAM2: %5.2f%% of %d kB used.\n", (double)ocram / ocramsize * 100, ocramsize / 1024);
+	printf("RAM2: %6.2f%% of %d kB used.\n", (double)ocram / ocramsize * 100, ocramsize / 1024);
 	printf("   Variables (DMAMEM):      %6.2f kB\n", ocram / 1024.0);
 	printf("   Available for Heap:      %6.2f kB\n", (ocramsize - ocram) / 1024.0);
 	printf("\n");
@@ -38,16 +41,18 @@ int printnumbers(unsigned teensy_model_identifier, unsigned flexram_config,
 	printf("\n");
 	}
 		
-	printf("FLASH: %5.2f%% of %d kB used.\n", (double)flash / flashsize * 100, flashsize / 1024);
-	printf("   Code and Constants:     %6.2f kB\n", flash / 1024.0);
+	printf("FLASH: %6.2f%% of %d kB used.\n", (double)flash / flashsize * 100, flashsize / 1024);
+	printf("   Code and Constants:      %6.2f kB\n", flash / 1024.0);
 	printf("\n");
 
 	//print overflows
 	if (stack <= 0) {
 		retval = -1;
 		printf(">>>>> RAM1 overflowed <<<<<\n\n");
-	}
-	
+	} 
+	else if (stack < ram1size - (ram1size/100.0 * RAM1_WARN_PERCENTAGE) ) {
+		printf(">>>>> Warning Stack low <<<<<\n\n");
+	}	
 	if (ocram > ocramsize) {
 		retval = -1;
 		printf(">>>>> RAM2 overflowed <<<<<\n\n");
