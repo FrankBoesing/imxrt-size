@@ -78,6 +78,7 @@ int main() {
 	unsigned teensy_model_identifier = 0;
 	unsigned stext = 0;
 	unsigned etext = 0;
+	unsigned exidx_end = 0;
 	unsigned sdata = 0;
 	unsigned ebss = 0;
 	unsigned flashimagelen = 0;
@@ -94,6 +95,7 @@ int main() {
 			if (strstr(str, "_teensy_model_identifier")) teensy_model_identifier = strtol(str, NULL, 16);
 			if (strstr(str, "T _stext")) stext = strtol(str, NULL, 16);
 			if (strstr(str, "T _etext")) etext = strtol(str, NULL, 16);
+			if (strstr(str, "R __exidx_end")) exidx_end = strtol(str, NULL, 16);
 			if (strstr(str, "D _sdata")) sdata = strtol(str, NULL, 16);
 			if (strstr(str, "B _ebss")) ebss = strtol(str, NULL, 16);
 			if (strstr(str, " _heap_start")) heap_start = strtol(str, NULL, 16);
@@ -106,15 +108,17 @@ int main() {
 		}
 	} while (s);
 
+	unsigned itcm = ((exidx_end > etext) ? exidx_end - stext: etext - stext);
+
 	//printf("estack:%x ebss:%x\n", estack, ebss);
 	if (teensy_model_identifier == 0x24) { //Teensy40
-		retval = printnumbers(teensy_model_identifier, flexram_bank_config, etext - stext, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, 0, 512*1024, 1984*1024);
+		retval = printnumbers(teensy_model_identifier, flexram_bank_config, itcm, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, 0, 512*1024, 1984*1024);
 	}
 	else if (teensy_model_identifier == 0x25) {//Teensy41
-		retval = printnumbers(teensy_model_identifier, flexram_bank_config, etext - stext, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, extram_end - extram_start, 512*1024, 7936*1024);
+		retval = printnumbers(teensy_model_identifier, flexram_bank_config, itcm, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, extram_end - extram_start, 512*1024, 7936*1024);
 	}
 	else if (teensy_model_identifier == 0x26) { //TeensyMM
-		retval = printnumbers(teensy_model_identifier, flexram_bank_config, etext - stext, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, 0, 512*1024, 16128*1024);
+		retval = printnumbers(teensy_model_identifier, flexram_bank_config, itcm, ebss - sdata, heap_start - 0x20200000, flashimagelen, estack - ebss, 0, 512*1024, 16128*1024);
 	}
 	//else retval = 1;
 	return retval;
